@@ -6,9 +6,11 @@ import os
 # Streamlit interface for video download
 st.title("Video Downloader")
 
-# Initialize session state for tracking button click
+# Initialize session state for tracking button click and formats
 if "download_clicked" not in st.session_state:
     st.session_state.download_clicked = False
+if "formats" not in st.session_state:
+    st.session_state.formats = []
 
 # Step 1: Ask user for the video URL
 video_url = st.text_input("Enter the video URL (e.g., https://www.youtube.com/watch?v):")
@@ -46,64 +48,105 @@ def update_progress(d, progress_bar, progress_info):
                     f"{total_bytes / (1024 * 1024):.1f}MB"
                 )
 
-# Step 2: Button to start the download
-if not st.session_state.download_clicked:
-    if st.button("Download Video"):
-        if video_url:
-            # Hide the button once clicked
-            st.session_state.download_clicked = True
+# Step 2: Fetch available formats (video qualities)
+if st.button("Fetch Available Qualities"):
+    try:
+        with yt_dlp.YoutubeDL() as ydl:
+            info = ydl.extract_info(video_url, download=False)
+            formats = info.get('formats', [])
 
-            # Define temporary save location
-            temp_video_location = Path(os.getcwd()) / "downloaded_video.mp4"
-            
-            # Options for yt-dlp
-            ydl_opts = {
-                'outtmpl': str(temp_video_location),
-                'format': 'best',  # Download the best video and audio combined
-                'progress_hooks': [lambda d: update_progress(d, progress_bar, progress_info)]
+        # Store the formats in session state, handling missing 'format_note'
+        st.session_state.formats = [
+            {
+                "format_id": f['format_id'],
+                "format_note": f.get('format_note', 'Unknown Quality'),
+                "filesize": f.get('filesize', 0),
+                "acodec": f.get('acodec', 'none'),
+                "vcodec": f.get('vcodec', 'none')
             }
+            for f in formats if f.get('format_note')
+        ]
+        
+        if not st.session_state.formats:
+            st.warning("No video formats found.")
+    
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
 
-            # Create a progress bar and information text
-            progress_bar = st.progress(0)
-            progress_info = st.empty()  # Placeholder for progress info
+# Step 3: Let user select video quality (only if formats are available)
+if st.session_state.formats:
+    # Create a dropdown for video quality
+    format_choices = []
+    for f in st.session_state.formats:
+        # Determine if format is audio only, video with audio, or video without audio
+        if f['acodec'] == 'none' and f['vcodec'] != 'none':
+            type_info = "Video without Audio"
+        elif f['acodec'] != 'none' and f['vcodec'] == 'none':
+            type_info = "Audio only"
+        else:
+            type_info = "Video with Audio"
+        
+        # Format the choice text
+        size_info = f"{f['filesize'] / (1024 * 1024):.2f}MB" if f['filesize'] else "Unknown size"
+        format_choices.append(f"{f['format_note']} - {size_info} ({type_info})")
+    
+    selected_format = st.selectbox("Select Video Quality", format_choices)
+    selected_format_id = st.session_state.formats[format_choices.index(selected_format)]['format_id']
 
-            # Show downloading message and spinner
-            with st.spinner('Downloading...'):
-                try:
-                    # Use yt-dlp for the provided URL
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        ydl.download([video_url])
-                    
-                    # Preview the downloaded video
-                    st.success("Video downloaded successfully!")
-                    st.video(str(temp_video_location))  # Display video in the interface
+# Step 4: Button to start the download
+if video_url and st.session_state.formats and 'selected_format_id' in locals():
+    if not st.session_state.download_clicked:
+        if st.button("Download Video"):
+            if video_url:
+                # Hide the button once clicked
+                st.session_state.download_clicked = True
 
-                    # Provide download button
-                    with open(temp_video_location, "rb") as video_file:
-                        st.download_button(
-                            label="Save Video to Your Computer",
-                            data=video_file,
-                            file_name="downloaded_video.mp4",
-                            mime="video/mp4"
-                        )
+                # Define temporary save location
+                temp_video_location = Path(os.getcwd()) / "downloaded_video.mp4"
+                
+                # Options for yt-dlp
+                ydl_opts = {
+                    'outtmpl': str(temp_video_location),
+                    'format': selected_format_id,  # Use the selected format id
+                    'progress_hooks': [lambda d: update_progress(d, progress_bar, progress_info)]
+                }
+
+                # Create a progress bar and information text
+                progress_bar = st.progress(0)
+                progress_info = st.empty()  # Placeholder for progress info
+
+                # Show downloading message and spinner
+                with st.spinner('Downloading...'):
+                    try:
+                        # Use yt-dlp for the provided URL
+                        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                            ydl.download([video_url])
                         
-                    # Remove the temporary file after download
-                    os.remove(temp_video_location)
+                        # Preview the downloaded video
+                        st.success("Video downloaded successfully!")
+                        st.video(str(temp_video_location))  # Display video in the interface
 
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
-                    # Remove the temporary file if it exists and an error occurs
-                    if temp_video_location.exists():
+                        # Provide download button
+                        with open(temp_video_location, "rb") as video_file:
+                            st.download_button(
+                                label="Save Video to Your Computer",
+                                data=video_file,
+                                file_name="downloaded_video.mp4",
+                                mime="video/mp4"
+                            )
+                            
+                        # Remove the temporary file after download
                         os.remove(temp_video_location)
 
-                # Reset button state after download
-                st.session_state.download_clicked = False
+                    except Exception as e:
+                        st.error(f"An error occurred: {str(e)}")
+                        # Remove the temporary file if it exists and an error occurs
+                        if temp_video_location.exists():
+                            os.remove(temp_video_location)
+
+                    # Reset button state after download
+                    st.session_state.download_clicked = False
                 
-            # Reset progress bar
-            progress_bar.empty()
-            progress_info.empty()
-                
-        else:
-            st.warning("Please enter a valid video URL.")
-else:
-    st.warning("Download in progress. Please wait...")
+                # Reset progress bar
+                progress_bar.empty()
+                progress_info.empty()
