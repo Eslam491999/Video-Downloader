@@ -1,55 +1,68 @@
-Video Downloader with Streamlit and yt-dlp
+
+# Video Downloader with Streamlit and yt-dlp
+
 This is a Streamlit web application that allows users to download videos from a URL (e.g., YouTube). The app provides options to select the desired video quality and tracks the download progress.
 
-Features
-Fetch available video qualities (with or without audio) for the provided URL.
-Select a specific format for downloading.
-Progress tracking for the download process with speed and ETA display.
-Preview the downloaded video.
-Download button to save the video to your local device.
-Requirements
-Python 3.7+
-yt-dlp for video downloading
-streamlit for the web interface
-Installation
-Clone the repository or download the source code.
+## Features
 
-bash
-Copy code
-git clone https://github.com/your-repo/video-downloader.git
-cd video-downloader
-Install the required dependencies using pip.
+- Fetch available video qualities (with or without audio) for the provided URL.
+- Select a specific format for downloading.
+- Progress tracking for the download process with speed and ETA display.
+- Preview the downloaded video.
+- Download button to save the video to your local device.
 
-bash
-Copy code
-pip install -r requirements.txt
-Run the Streamlit app.
+## Requirements
 
-bash
-Copy code
-streamlit run app.py
-How to Use
-Enter a video URL in the input field (e.g., a YouTube video link).
+- Python 3.7+
+- `yt-dlp` for video downloading
+- `streamlit` for the web interface
 
-Click the "Fetch Available Qualities" button to retrieve the list of available formats. The formats will display video and audio options with details on whether it is:
+## Installation
 
-Video with Audio
-Video without Audio
-Audio only
-Select the desired quality from the dropdown menu based on the format information, which includes the size and type (audio or video).
+1. Clone the repository or download the source code.
 
-Click "Download Video" to start downloading the selected format. The download progress, including the speed and estimated time remaining (ETA), will be shown during the process.
+   ```bash
+   git clone https://github.com/your-repo/video-downloader.git
+   cd video-downloader
+   ```
 
-Once downloaded, you can preview the video within the app and use the "Save Video to Your Computer" button to download the file.
+2. Install the required dependencies using `pip`.
 
-Code Overview
-Fetching Formats: The app uses yt-dlp to extract available formats for the video URL and displays the quality options for the user.
-Progress Tracking: A progress bar and ETA information are displayed during the download.
-Video Preview: After downloading, users can preview the video directly in the Streamlit interface.
-Download Options: Users can save the video to their local machine after it has been downloaded.
-Example
-python
-Copy code
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the Streamlit app.
+
+   ```bash
+   streamlit run app.py
+   ```
+
+## How to Use
+
+1. Enter a video URL in the input field (e.g., a YouTube video link).
+   
+2. Click the "Fetch Available Qualities" button to retrieve the list of available formats. The formats will display video and audio options with details on whether it is:
+   - **Video with Audio**
+   - **Video without Audio**
+   - **Audio only**
+
+3. Select the desired quality from the dropdown menu based on the format information, which includes the size and type (audio or video).
+
+4. Click "Download Video" to start downloading the selected format. The download progress, including the speed and estimated time remaining (ETA), will be shown during the process.
+
+5. Once downloaded, you can preview the video within the app and use the "Save Video to Your Computer" button to download the file.
+
+## Code Overview
+
+- **Fetching Formats**: The app uses `yt-dlp` to extract available formats for the video URL and displays the quality options for the user.
+- **Progress Tracking**: A progress bar and ETA information are displayed during the download.
+- **Video Preview**: After downloading, users can preview the video directly in the Streamlit interface.
+- **Download Options**: Users can save the video to their local machine after it has been downloaded.
+
+## Example
+
+```python
 # Streamlit interface for video download
 st.title("Video Downloader")
 
@@ -89,5 +102,8 @@ if st.button("Download Video"):
         ydl.download([video_url])
     st.success("Download complete!")
     st.video('downloaded_video.mp4')
-License
+```
+
+## License
+
 This project is licensed under the MIT License.
