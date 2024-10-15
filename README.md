@@ -35,7 +35,7 @@ This is a Streamlit web application that allows users to download videos from a 
 3. Run the Streamlit app.
 
    ```bash
-   streamlit run app.py
+   streamlit run downloader.py
    ```
 
 ## How to Use
